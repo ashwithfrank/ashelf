@@ -5,18 +5,19 @@ class AppTheme {
   static const _ink = Color(0xFF2B2620);
   static const _graphite = Color(0xFF14130F);
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData light(Color seed) => _build(Brightness.light, seed, false);
+  static ThemeData dark(Color seed, {bool amoled = false}) =>
+      _build(Brightness.dark, seed, amoled);
 
-  static ThemeData _build(Brightness b) {
+  static ThemeData _build(Brightness b, Color seed, bool amoled) {
     final dark = b == Brightness.dark;
-    final bg = dark ? _graphite : _cream;
+    final bg = dark ? (amoled ? Colors.black : _graphite) : _cream;
+    final bar = dark
+        ? (amoled ? const Color(0xFF0A0A0A) : const Color(0xFF1C1A15))
+        : const Color(0xFFEDE6D6);
     return ThemeData(
       useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF8A6A3D),
-        brightness: b,
-      ),
+      colorScheme: ColorScheme.fromSeed(seedColor: seed, brightness: b),
       scaffoldBackgroundColor: bg,
       appBarTheme: AppBarTheme(
         backgroundColor: bg,
@@ -25,10 +26,7 @@ class AppTheme {
         scrolledUnderElevation: 0,
         centerTitle: false,
       ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor:
-            dark ? const Color(0xFF1C1A15) : const Color(0xFFEDE6D6),
-      ),
+      navigationBarTheme: NavigationBarThemeData(backgroundColor: bar),
     );
   }
 }

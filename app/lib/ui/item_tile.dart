@@ -3,12 +3,25 @@ import 'package:open_filex/open_filex.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../core/format.dart';
+import '../core/settings.dart';
 import '../data/library_repo.dart';
 import '../data/models.dart';
 import 'folder_screen.dart';
+import 'viewer_screen.dart';
+
+/// Opens PDFs and images in the built-in viewer, anything else in another app.
+Future<void> openItem(BuildContext context, LibItem item) async {
+  final inApp = Settings.instance.openInApp && (item.type == 'pdf' || item.type == 'image');
+  if (inApp) {
+    await Navigator.push(
+        context, MaterialPageRoute(builder: (_) => ViewerScreen(item: item)));
+  } else {
+    await openExternal(context, item);
+  }
+}
 
 /// Downloads the file if needed, then opens it in the phone's PDF/file app.
-Future<void> openItem(BuildContext context, LibItem item) async {
+Future<void> openExternal(BuildContext context, LibItem item) async {
   final messenger = ScaffoldMessenger.of(context);
   try {
     final file = await LibraryRepo.instance.download(item);
@@ -70,7 +83,7 @@ class ItemTile extends StatelessWidget {
     final saved = repo.favs.contains(item.path);
     final done = repo.isDownloaded(item);
     final p = repo.progress[item.path];
-    final where = item.parent.split('/').skip(2).join(' › ');
+    final where = item.parent.split('/').skip(1).join(' › ');
     final meta = [formatSize(item.size), if (showPath) where]
         .where((s) => s.isNotEmpty)
         .join(' · ');
@@ -102,6 +115,9 @@ class ItemTile extends StatelessWidget {
                 case 'save':
                   repo.toggleFav(item);
                   break;
+                case 'external':
+                  openExternal(context, item);
+                  break;
                 case 'share':
                   Share.share('${item.title}\n${item.url}');
                   break;
@@ -113,6 +129,7 @@ class ItemTile extends StatelessWidget {
             itemBuilder: (_) => [
               PopupMenuItem(
                   value: 'save', child: Text(saved ? 'Remove from Saved' : 'Save')),
+              const PopupMenuItem(value: 'external', child: Text('Open in another app')),
               const PopupMenuItem(value: 'share', child: Text('Share link')),
               if (done)
                 const PopupMenuItem(value: 'remove', child: Text('Delete download')),

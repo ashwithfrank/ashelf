@@ -151,4 +151,26 @@ class LibraryRepo extends ChangeNotifier {
     }
     return file;
   }
+
+  int fileCount(String path) =>
+      items.where((i) => !i.isFolder && i.path.startsWith('$path/')).length;
+
+  int lastPage(LibItem i) => _prefs.getInt('page:${i.path}') ?? 1;
+  void setLastPage(LibItem i, int page) => _prefs.setInt('page:${i.path}', page);
+
+  Future<int> downloadsSize() async {
+    final d = Directory('${_dir.path}/downloads');
+    if (!await d.exists()) return 0;
+    var total = 0;
+    await for (final e in d.list(recursive: true)) {
+      if (e is File) total += await e.length();
+    }
+    return total;
+  }
+
+  Future<void> clearDownloads() async {
+    final d = Directory('${_dir.path}/downloads');
+    if (await d.exists()) await d.delete(recursive: true);
+    notifyListeners();
+  }
 }
